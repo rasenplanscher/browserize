@@ -1,0 +1,24 @@
+{
+  "name": "browserize",
+  "description": "Converts simple node.js modules into ES6 modules",
+  "version": "0.0.1",
+  "author": "rasenplanscher",
+  "license": "MIT",
+  "main": "index.js",
+  "scripts": {
+  },
+  "homepage": "https://github.com/rasenplanscher/browserize#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rasenplanscher/browserize.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rasenplanscher/browserize/issues"
+  },
+  "keywords": [
+    "javascript",
+    "modules",
+    "nodejs",
+    "esm"
+  ]
+}
