@@ -1,4 +1,4 @@
-const fs = require('fs')
+const fs = require('fs-extra')
 const path = require('path')
 
 module.exports = function browserize(options) {
@@ -11,7 +11,7 @@ function writeFile(data, {
 	output: filePath = 'browserized.js',
 	encoding = 'utf8',
 }) {
-	fs.writeFileSync(filePath, data, { encoding })
+	fs.outputFileSync(filePath, data, { encoding })
 }
 
 function browserizeFiles({
