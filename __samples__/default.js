@@ -1,1 +1,1 @@
-module.exports = function defaultExport() {}
+module.exports = function defaultExport () {}

@@ -15,7 +15,6 @@ test('writes to given file output path, creating directories if needed', t => {
 
 	fs.removeSync(dir)
 
-	t.false(fs.existsSync(dir))
 	t.notThrows(()=>browserize({ output }))
 	t.true(fs.existsSync(output))
 })
@@ -128,4 +127,65 @@ test('injects double semicolon between default and named exports', t => {
 		output,
 		contentOf(defaultPath).match(/defaultExport[\s\S]+/)+'\n;;'
 	))
+})
+
+test('defaults to `.js` for inputs and `.mjs` for outputs', t => {
+	const inputDefault = from('default')
+	const inputNamed = from('named')
+	const output = out('output')
+	const outputExt = output + '.mjs'
+
+	t.false(fs.existsSync(inputDefault))
+	t.true(fs.existsSync(inputDefault + '.js'))
+
+	t.false(fs.existsSync(inputNamed))
+	t.true(fs.existsSync(inputNamed + '.js'))
+
+	fs.removeSync(outputExt)
+
+	t.notThrows(() => browserize({
+		default: inputDefault,
+		named: inputNamed,
+		output,
+	}))
+	t.true(fs.existsSync(outputExt))
+})
+
+test('writes no default export if given `default: null`', t => {
+	const output = out('named-only.mjs')
+
+	browserize({
+		default: null,
+		named: namedPath,
+		output,
+	})
+
+	t.false(contains(
+		output,
+		'export default'
+	))
+})
+
+test.serial('defaults to `{default: "index.js", named: null, output: "index.mjs"}`', t => {
+	const output = from('defaults/index.mjs')
+
+	fs.removeSync(output)
+	process.chdir('__samples__/defaults')
+
+	try {
+		browserize()
+	} catch (error) {
+		process.chdir('../..')
+		throw error
+	}
+
+	t.true(contains(output, 'export default function defaultExportFromIndex'))
+
+	fs.removeSync(output)
+})
+
+test ('throws if no input path is given', t => {
+	t.throws(() => browserize({
+		default: null,
+	}))
 })
