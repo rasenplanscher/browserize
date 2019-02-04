@@ -175,9 +175,11 @@ test.serial('defaults to `{default: "index.js", named: null, output: "index.mjs"
 	try {
 		browserize()
 	} catch (error) {
-		process.chdir('../..')
 		throw error
+	} finally {
+		process.chdir('../..')
 	}
+
 
 	t.true(contains(output, 'export default function defaultExportFromIndex'))
 
