@@ -16,9 +16,25 @@ module.exports = function browserize(options = {}) {
 
 
 function writeFile(data, {
-	output: filePath = defaultFilePath,
+	default: defaultPath = defaultFilePath,
+	named: namedPath,
+	output: filePath,
 	encoding = 'utf8',
 }) {
+	if (!filePath) {
+		if (!defaultPath) {
+			defaultPath = namedPath
+		}
+
+		filePath = path.join(
+			path.dirname(defaultPath),
+			path.basename(
+				defaultPath,
+				path.extname(defaultPath)
+			)
+		)
+	}
+
 	if (filePath && !path.extname(filePath)) {
 		filePath = filePath + defaultOutputExtension
 	}

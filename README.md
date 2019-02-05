@@ -55,46 +55,16 @@ Open an issue, and let's talk about it 😉
 
 
 # How to use it
-+ [CLI](#cli)
 + [node API](#node-api)
++ [CLI](#cli)
 + [Requirements](#requirements)
-
-
-## CLI
-```bash
-npx browserize [--no-default|-x] [[--default|-d] index.js] [[--named|-n] helpers.js] [[--output|-o] index.mjs]
-```
-
-### Three examples
-#### The simplest form
-```sh
-npx browserize
-```
-
-This reads `index.js` and writes the equivalent `index.mjs`, and that's it.
-
-
-#### Adding named exports
-```sh
-npm browserize -n helper-functions
-```
-
-This reads `index.js` and `helper-functions.js`, then transforms concatenates them, and finally writes the result to `index.mjs`.
-
-
-#### The most complex case `browserize` covers
-```sh
-npx browserize class-name.jsx helper-functions.js dist/browser-magic.js
-```
-
-This includes named exports and sets custom paths for everything.
 
 
 ## node API
 `browserize` takes an options object with three optional entries:
 + `default`: the file where the default export is found, defaults to `index.js`
 + `named`: where to find the named exports, defaults to `null`
-+ `output`: where to write the ESM file, defaults to `index.mjs`
++ `output`: where to write the ESM file, defaults to the `default` or `named` filename with the extension `.mjs`
 
 And that is it.
 
@@ -116,6 +86,39 @@ browserize({
 	named: 'helper-functions.js',
 	output: 'dist/browser-magic.js',
 })
+```
+
+This includes named exports and sets custom paths for everything.
+
+
+## CLI
+```bash
+npx browserize [--no-default|-x] [[--default|-d] index.js] [[--named|-n] helpers.js] [[--output|-o] index.mjs]
+```
+
+The CLI passes the given arguments through to the underlying node API.
+
+
+### Three examples
+#### The simplest form
+```sh
+npx browserize
+```
+
+This reads `index.js` and writes the equivalent `index.mjs`, and that's it.
+
+
+#### Adding named exports
+```sh
+npm browserize -n helper-functions
+```
+
+This reads `index.js` and `helper-functions.js`, then transforms concatenates them, and finally writes the result to `index.mjs`.
+
+
+#### The most complex case `browserize` covers
+```sh
+npx browserize class-name.jsx helper-functions.js dist/browser-magic.js
 ```
 
 This includes named exports and sets custom paths for everything.

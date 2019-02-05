@@ -186,6 +186,35 @@ test.serial('defaults to `{default: "index.js", named: null, output: "index.mjs"
 	fs.removeSync(output)
 })
 
+test.serial('defaults to default filename for output, with `.mjs` extension', t => {
+	const input = from('defaults/output.js')
+	const output = from('defaults/output.mjs')
+
+	fs.removeSync(output)
+
+	browserize({ default: input })
+
+	t.true(contains(output, 'export default function defaultExportFromOutput'))
+
+	fs.removeSync(output)
+})
+
+test.serial('defaults to named filename for output, if default is excluded', t => {
+	const input = from('defaults/output-named.js')
+	const output = from('defaults/output-named.mjs')
+
+	fs.removeSync(output)
+
+	browserize({
+		default: null,
+		named: input,
+	})
+
+	t.true(contains(output, 'export {}'))
+
+	fs.removeSync(output)
+})
+
 test ('throws if no input path is given', t => {
 	t.throws(() => browserize({
 		default: null,

@@ -1,7 +1,7 @@
 {
   "name": "browserize",
   "description": "Converts simple node.js modules into ES6 modules",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "rasenplanscher",
   "license": "MIT",
   "main": "index.js",
