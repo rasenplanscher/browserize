@@ -1,8 +1,9 @@
 const test = require('ava')
+
 const fs = require('fs-extra')
 const path = require('path')
 
-const browserize = require('..')
+const browserizeFS = require('../fs')
 
 
 const from = filename => path.resolve('__samples__/' + filename)
@@ -15,7 +16,7 @@ test('writes to given file output path, creating directories if needed', t => {
 
 	fs.removeSync(dir)
 
-	t.notThrows(()=>browserize({ output }))
+	t.notThrows(()=>browserizeFS({ output }))
 	t.true(fs.existsSync(output))
 })
 
@@ -27,46 +28,46 @@ const checkContent = (t, filepath, a, b) => {
 	t.false(contains(filepath, b))
 }
 
-const defaultPath = from('default.js')
-const namedPath = from('named.js')
+const main = from('default.js')
+const named = from('named.js')
 
 test('rewrites `module.exports =` as `export default` for default export', t => {
 	const output = out('default.mjs')
 
-	browserize({
-		default: defaultPath,
+	browserizeFS({
+		main,
 		named: null,
 		output,
 	})
 
-	checkContent(t, defaultPath, 'module.exports = ', 'export ')
+	checkContent(t, main, 'module.exports = ', 'export ')
 	checkContent(t, output, 'export default ', 'module.exports')
 })
 
 test('rewrites `module.exports = {` as `export {` for named exports', t => {
 	const output = out('named.mjs')
 
-	browserize({
-		default: null,
-		named: namedPath,
+	browserizeFS({
+		main: null,
+		named,
 		output,
 	})
 
-	checkContent(t, namedPath, 'module.exports = {', 'export ')
+	checkContent(t, named, 'module.exports = {', 'export ')
 	checkContent(t, output, 'export {', 'module.exports')
 })
 
 test('concatenates results for combined call', t => {
 	const output = out('full.mjs')
 
-	browserize({
-		default: defaultPath,
-		named: namedPath,
+	browserizeFS({
+		main,
+		named,
 		output,
 	})
 
-	checkContent(t, defaultPath, 'module.exports = ', 'export ')
-	checkContent(t, namedPath, 'module.exports = {', 'export ')
+	checkContent(t, main, 'module.exports = ', 'export ')
+	checkContent(t, named, 'module.exports = {', 'export ')
 	checkContent(t, output, 'export default ', 'module.exports')
 	t.true(contains(output, 'export {'))
 })
@@ -77,9 +78,9 @@ test('outputs default before named exports', t => {
 
 	const output = out('full.mjs')
 
-	browserize({
-		default: defaultPath,
-		named: namedPath,
+	browserizeFS({
+		main,
+		named,
 		output,
 	})
 
@@ -95,13 +96,13 @@ test('outputs default before named exports', t => {
 test('removes a require for the default, if present, from the named portion for a combined call', t=> {
 	const output = out('full.mjs')
 
-	browserize({
-		default: defaultPath,
-		named: namedPath,
+	browserizeFS({
+		main,
+		named,
 		output,
 	})
 
-	t.true(contains(namedPath, 'const defaultExport = require'))
+	t.true(contains(named, 'const defaultExport = require'))
 	t.false(contains(output, 'const defaultExport ='))
 })
 
@@ -114,49 +115,49 @@ test('injects double semicolon between default and named exports', t => {
 
 	const output = out('full.mjs')
 
-	browserize({
-		default: defaultPath,
-		named: namedPath,
+	browserizeFS({
+		main,
+		named,
 		output,
 	})
 
-	t.false(contains(defaultPath, ';'))
-	t.false(contains(namedPath, ';'))
+	t.false(contains(main, ';'))
+	t.false(contains(named, ';'))
 	t.true(contains(output, ';;'))
 	t.true(contains(
 		output,
-		contentOf(defaultPath).match(/defaultExport[\s\S]+/)+'\n;;'
+		contentOf(main).match(/defaultExport[\s\S]+/)+'\n;;'
 	))
 })
 
 test('defaults to `.js` for inputs and `.mjs` for outputs', t => {
-	const inputDefault = from('default')
-	const inputNamed = from('named')
-	const output = out('output')
-	const outputExt = output + '.mjs'
+	const mainNoExt = from('default')
+	const namedNoExt = from('named')
+	const outputNoExt = out('output')
+	const outputExt = outputNoExt + '.mjs'
 
-	t.false(fs.existsSync(inputDefault))
-	t.true(fs.existsSync(inputDefault + '.js'))
+	t.false(fs.existsSync(mainNoExt))
+	t.true(fs.existsSync(mainNoExt + '.js'))
 
-	t.false(fs.existsSync(inputNamed))
-	t.true(fs.existsSync(inputNamed + '.js'))
+	t.false(fs.existsSync(namedNoExt))
+	t.true(fs.existsSync(namedNoExt + '.js'))
 
 	fs.removeSync(outputExt)
 
-	t.notThrows(() => browserize({
-		default: inputDefault,
-		named: inputNamed,
-		output,
+	t.notThrows(() => browserizeFS({
+		main: mainNoExt,
+		named: namedNoExt,
+		output: outputNoExt,
 	}))
 	t.true(fs.existsSync(outputExt))
 })
 
-test('writes no default export if given `default: null`', t => {
+test('writes no default export if given `main: null`', t => {
 	const output = out('named-only.mjs')
 
-	browserize({
-		default: null,
-		named: namedPath,
+	browserizeFS({
+		main: null,
+		named,
 		output,
 	})
 
@@ -166,14 +167,14 @@ test('writes no default export if given `default: null`', t => {
 	))
 })
 
-test.serial('defaults to `{default: "index.js", named: null, output: "index.mjs"}`', t => {
+test.serial('defaults to `{main: "index.js", named: null, output: "index.mjs"}`', t => {
 	const output = from('defaults/index.mjs')
 
 	fs.removeSync(output)
 	process.chdir('__samples__/defaults')
 
 	try {
-		browserize()
+		browserizeFS()
 	} catch (error) {
 		throw error
 	} finally {
@@ -192,7 +193,7 @@ test.serial('defaults to default filename for output, with `.mjs` extension', t 
 
 	fs.removeSync(output)
 
-	browserize({ default: input })
+	browserizeFS({ main: input })
 
 	t.true(contains(output, 'export default function defaultExportFromOutput'))
 
@@ -205,8 +206,8 @@ test.serial('defaults to named filename for output, if default is excluded', t =
 
 	fs.removeSync(output)
 
-	browserize({
-		default: null,
+	browserizeFS({
+		main: null,
 		named: input,
 	})
 
@@ -216,7 +217,7 @@ test.serial('defaults to named filename for output, if default is excluded', t =
 })
 
 test ('throws if no input path is given', t => {
-	t.throws(() => browserize({
-		default: null,
+	t.throws(() => browserizeFS({
+		main: null,
 	}))
 })

@@ -61,23 +61,41 @@ Open an issue, and let's talk about it 😉
 
 
 ## node API
-`browserize` takes an options object with three optional entries:
-+ `default`: the file where the default export is found, defaults to `index.js`
+You can import either `browserize` or `browserize/fs`, depending on how you will use it.
+
+`browserize` takes an options object with two optional entries:
++ `main`: a string containing the main/default export
++ `named`: a string containing the named exports
+
+`browserize/fs` takes an options object with three optional entries:
++ `main`: the file where the main/default export is found, defaults to `index.js`
 + `named`: where to find the named exports, defaults to `null`
-+ `output`: where to write the ESM file, defaults to the `default` or `named` filename with the extension `.mjs`
++ `output`: where to write the ESM file, defaults to the `main` or `named` filename with the extension `.mjs`
 
 And that is it.
 
-### Two examples
+### Examples
 #### The simplest form
 ```js
-const browserize = require('browserize')
-browserize()
+const browserizeFS = require('browserize/fs')
+browserizeFS()
 ```
 This reads `index.js` and writes the equivalent `index.mjs`, and that's it.
 
 
-#### The most complex case `browserize` covers
+#### Handling in-memory files
+```js
+const fs = require('fs-extra')
+const browserize = require('browserize')
+const main = fs.readFileSync('main.js').toString()
+
+browserize({ main })
+```
+Turns the content of `main.js` into its ESM version.
+This is mainly useful if you want to integrate with a build setup using in-memory files, like `gulp`.
+
+
+#### The most complex case `browserize/fs` covers
 ```js
 const browserize = require('browserize')
 
@@ -96,10 +114,10 @@ This includes named exports and sets custom paths for everything.
 npx browserize [--no-default|-x] [[--default|-d] index.js] [[--named|-n] helpers.js] [[--output|-o] index.mjs]
 ```
 
-The CLI passes the given arguments through to the underlying node API.
+The CLI passes the given arguments through to the underlying node API, and works through `browserize/fs`.
 
 
-### Three examples
+### Examples
 #### The simplest form
 ```sh
 npx browserize

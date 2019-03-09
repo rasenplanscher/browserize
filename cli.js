@@ -4,7 +4,7 @@
 // drop `node` and `cli.js`, the actual parameters come after those
 const p = require('minimist')(process.argv.slice(2));
 
-const browserize = require('.');
+const fs = require('./fs');
 
 let defaultPath, namedPath, outputPath
 
@@ -22,7 +22,7 @@ namedPath = p.named || p.n || p._.shift()
 outputPath = p.output || p.o || p._.shift()
 
 
-browserize({
+fs({
 	default: defaultPath,
 	named: namedPath,
 	output: outputPath,

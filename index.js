@@ -1,96 +1,47 @@
-const fs = require('fs-extra')
-const path = require('path')
+module.exports = function browserize({ main, named }) {
+	if (main && named) {
+		const mainExport = browserizeMain(main)
+		const mainName = mainExport.match(/export +default +(?:class +|function +|const +)?(\w+)/)[1]
 
+		const namedExport = browserizeNamed(named, new RegExp(`^const +${mainName} *= *require\\((?:'[^']+'|"[^"]+")\\)`))
 
-const defaultFilePath = 'index'
-const defaultInputExtension = '.js'
-const defaultOutputExtension = '.mjs'
-
-module.exports = function browserize(options = {}) {
-	const output = browserizeFiles(options)
-	writeFile(output, options)
-}
-
-
-//
-
-
-function writeFile(data, {
-	default: defaultPath = defaultFilePath,
-	named: namedPath,
-	output: filePath,
-	encoding = 'utf8',
-}) {
-	if (!filePath) {
-		if (!defaultPath) {
-			defaultPath = namedPath
-		}
-
-		filePath = path.join(
-			path.dirname(defaultPath),
-			path.basename(
-				defaultPath,
-				path.extname(defaultPath)
-			)
-		)
+		return `${mainExport}\n;;\n${namedExport}`
 	}
 
-	if (filePath && !path.extname(filePath)) {
-		filePath = filePath + defaultOutputExtension
+	if (named) {
+		return browserizeNamed(named)
 	}
 
-	fs.outputFileSync(filePath, data, { encoding })
-}
-
-function browserizeFiles({
-	default: defaultPath = defaultFilePath,
-	named: namedPath,
-}) {
-	if (defaultPath && !path.extname(defaultPath)) {
-		defaultPath = defaultPath + defaultInputExtension
-	}
-	if (namedPath && !path.extname(namedPath)) {
-		namedPath = namedPath + defaultInputExtension
-	}
-
-
-	if (defaultPath && namedPath) {
-		const defaultExport = browserizeDefault(defaultPath)
-		const defaultName = defaultExport.match(/(?:export default )(?:class +|function +|const +)?(\w+)/)[1]
-
-		const namedExport = browserizeNamed(namedPath).replace(new RegExp(`^const +${defaultName} *= *require\\((['"])[^\\1]+\\1\\)`), '')
-
-		return `${defaultExport}\n;;\n${namedExport}`
-	}
-
-	if (namedPath) {
-		return browserizeNamed(namedPath)
-	}
-
-	if (defaultPath) {
-		return browserizeDefault(defaultPath)
+	if (main) {
+		return browserizeMain(main)
 	}
 
 
 	throw new Error('Expect at least one input file')
 }
 
-function browserizeDefault(filePath) {
-	const defaultExportParts = fs.readFileSync(filePath).toString().split(/^module\.exports[ \t\n]*=[ \t\n]*/m)
+function browserizeMain(data) {
+	const mainExportParts = data.split(/^module\.exports[ \t\n]*=[ \t\n]*/m)
 
-	if (defaultExportParts.length !== 2) {
+	if (mainExportParts.length !== 2) {
 		throw new Error('Expect exactly one export in default export file')
 	}
 
-	return `${defaultExportParts[0]}export default ${defaultExportParts[1]}`
+	return `${mainExportParts[0]}export default ${mainExportParts[1]}`
 }
 
-function browserizeNamed(filePath) {
-	const namedExportsParts = fs.readFileSync(filePath).toString().split(/^module\.exports[ \t\n]*=[ \t\n]*\{/m)
+function browserizeNamed(data, defaultExport) {
+	const namedExportsParts = data.split(/^module\.exports[ \t\n]*=[ \t\n]*\{/m)
 
 	if (namedExportsParts.length !== 2) {
 		throw new Error('Expect exactly one grouped export in named exports file')
 	}
 
-	return `${namedExportsParts[0]}export {${namedExportsParts[1]}`
+	let browserizedContent = `${namedExportsParts[0]}export {${namedExportsParts[1]}`
+
+	if (defaultExport) {
+		browserizedContent = browserizedContent.replace(defaultExport, '')
+	}
+
+	return browserizedContent
 }

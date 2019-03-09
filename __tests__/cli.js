@@ -81,7 +81,7 @@ function checkOptions (t, input, main, named, output) {
 
 	let options
 	proxyquire('../cli.js', {
-		'.': o => { options = o }
+		'./fs': o => { options = o }
 	})
 
 	t.deepEqual(options, {
