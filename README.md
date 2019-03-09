@@ -26,13 +26,102 @@ Converts simple node.js modules into ES6 modules.
 ## What it does
 `browserize` turns this:
 ```js
-module.exports = function defaultExport() {}
+module.exports = function main() {}
+```
+```js
+const extra = 'EXTRA',
+module.exports = {
+	extra,
+}
 ```
 
 into this:
 ```js
-export default function defaultExport() {}
+export default function main() {}
+
+const extra = 'EXTRA',
+export {
+	extra,
+}
 ```
+
+
+### Recognizes references to `main`
+`browserize` turns this:
+```js
+module.exports = function main() { return common }
+```
+
+```js
+const main = require('./main')
+module.exports = {
+	extra: main,
+}
+```
+
+into this:
+```js
+const common = 'CONSTANT'
+export default function main() { return common }
+
+export {
+	extra: main,
+}
+```
+
+This relies
+
+
+### Merges constants and Variables
+`browserize` turns this:
+```js
+const common = 'CONSTANT'
+module.exports = function main() { return common }
+```
+
+```js
+const common = 'CONSTANT'
+module.exports = {
+	extra: common,
+}
+```
+
+into this:
+```js
+const common = 'CONSTANT'
+export default function main() { return common }
+
+export {
+	extra: common,
+}
+```
+
+
+and this:
+```js
+let common = 'VARIABLE'
+module.exports = function main() { return common }
+```
+
+```js
+let common = 'VARIABLE'
+module.exports = {
+	extra: common,
+}
+```
+
+into this:
+```js
+let common = 'VARIABLE'
+export default function main() { return common }
+
+common = 'VARIABLE'
+export {
+	extra: common,
+}
+```
+
+**NOTE:** Since `browserize` cannot know if `common` gets changed in `main.js`, it leaves the assignment in place. If the variable is not assigned in the second file, the declaration is removed.
 
 
 ## What it does not
@@ -145,6 +234,7 @@ This includes named exports and sets custom paths for everything.
 ## Requirements
 `browserize` is a simple tool and has a few simple requirements:
 
+
 ### Each source file must contain exactly one assignment to `module.exports`
 #### Good
 ```js
@@ -175,6 +265,7 @@ window.myStuff = class DefaultExport {}
 ```
 This is not a module.
 
+
 ### The default export must be declared without a newline between the assignment operator and the exported item
 #### Good
 ```js
@@ -192,6 +283,7 @@ class DefaultExport {}
 ```
 While this is valid in node.js, it will lead to an invalid ESM file.
 
+
 ### The named exports must be declared as an object literal
 #### Good
 ```js
@@ -199,16 +291,41 @@ module.exports = { helper1, helper2 }
 ```
 ```js
 module.exports = {
-	key1: helper1,
-	key2: helper2,
+	helper1,
+	helper2,
 }
 ```
 
 #### Bad
 ```js
-module.exports.key1 = helper1
-module.exports.key2 = helper2
+module.exports.helper1 = helper1
+module.exports.helper2 = helper2
 ```
 While this is valid in node.js, `browserize` does not understand it.
 
 This is too complex, and has no real benefit over the object literal.
+
+
+### The named exports must use shorthand syntax
+#### Good
+```js
+module.exports = {
+	helper1,
+	helper2,
+}
+```
+
+#### Bad
+```js
+module.exports = {
+	helper1: helper1,
+	helper2: helper2,
+}
+```
+```js
+module.exports = {
+	key1: helper1,
+	key2: helper2,
+}
+```
+While this is valid in node.js, it will lead to an invalid ESM file.
