@@ -148,13 +148,17 @@ Open an issue, and let's talk about it 😉
 + [CLI](#cli)
 + [Requirements](#requirements)
 
+**NOTE:** If you want to interpolate imports, you need to use the node API.
+This feature is currently not available for `browserize/fs` and consequently for the CLI.
+
 
 ## node API
 You can import either `browserize` or `browserize/fs`, depending on how you will use it.
 
-`browserize` takes an options object with two optional entries:
+`browserize` takes an options object with three optional entries:
 + `main`: a string containing the main/default export
 + `named`: a string containing the named exports
++ `imports`: a key/value store that maps import paths to replacement values
 
 `browserize/fs` takes an options object with three optional entries:
 + `main`: the file where the main/default export is found, defaults to `index.js`
@@ -196,6 +200,26 @@ browserize({
 ```
 
 This includes named exports and sets custom paths for everything.
+
+
+#### Replacing imports
+```js
+const fs = require('fs-extra')
+const browserize = require('browserize')
+const main = fs.readFileSync('main.js').toString()
+
+browserize({
+	main,
+	imports: {
+		'./constant': 'CONSTANT',
+	}
+})
+```
+Using this feature, you can extract constants for common use in node files and still have an ESM file without dependencies.
+
+**IMPORTANT**: The keys are matched verbatim, so `imports:{'./x':'X'}` will do nothing for `require('./x.js')`.
+
+**NOTE**: This only works for simple values, like strings and arrays, not functions or classes.
 
 
 ## CLI

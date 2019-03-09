@@ -1,26 +1,79 @@
-module.exports = function browserize({ main, named }) {
+module.exports = function browserize({ main, named, imports={} }) {
 	if (main && named) {
-		const mainExport = browserizeMain(main)
-		const mainName = mainExport.match(/export +default +(?:class +|function +|const +)?(\w+)/)[1]
-
-		const namedExport = browserizeNamed(named, new RegExp(`^const +${mainName} *= *require\\((?:'[^']+'|"[^"]+")\\)`))
-
-		return `${mainExport}\n;;\n${deduped(namedExport, mainExport)}`
+		return interpolateImports(
+			browserizeBoth(main, named),
+			imports,
+		)
 	}
 
 	if (named) {
-		return browserizeNamed(named)
+		return interpolateImports(
+			browserizeNamed(named),
+			imports,
+		)
 	}
 
 	if (main) {
-		return browserizeMain(main)
+		return interpolateImports(
+			browserizeMain(main),
+			imports,
+		)
 	}
-
 
 	throw new Error('Expect at least one input file')
 }
 
-function deduped(named, main) {
+function browserizeBoth(main, named) {
+	const mainExport = browserizeMain(main)
+	const mainName = mainExport.match(/export +default +(?:class +|function +|const +)?(\w+)/)[1]
+
+	const namedExport = browserizeNamed(named, new RegExp(`^const +${mainName} *= *require\\((?:'[^']+'|"[^"]+")\\)`))
+
+	return `${mainExport}\n;;\n${deduplicate(namedExport, mainExport)}`
+}
+
+
+function browserizeMain(file) {
+	const mainExportParts = file.split(/^module\.exports[ \t\n]*=[ \t\n]*/m)
+
+	if (mainExportParts.length !== 2) {
+		throw new Error('Expect exactly one export in default export file')
+	}
+
+	return `${mainExportParts[0]}export default ${mainExportParts[1]}`
+}
+
+function browserizeNamed(file, defaultExport) {
+	const namedExportsParts = file.split(/^module\.exports[ \t\n]*=[ \t\n]*\{/m)
+
+	if (namedExportsParts.length !== 2) {
+		throw new Error('Expect exactly one grouped export in named exports file')
+	}
+
+	let browserizedContent = `${namedExportsParts[0]}export {${namedExportsParts[1]}`
+
+	if (defaultExport) {
+		browserizedContent = browserizedContent.replace(defaultExport, '')
+	}
+
+	return browserizedContent
+}
+
+
+//
+
+
+function interpolateImports(baseFile, imports) {
+	return Object.entries(imports).reduce((file, [path, data]) => (
+		file.replace(
+			/require\((['"])(\..+?)\1\)/g,
+			(_, __, requirePath) => JSON.stringify(data)
+		)
+	), baseFile)
+}
+
+
+function deduplicate(named, main) {
 	return named
 	.replace(
 		/\bconst +(\w+)\s*=\s*([^\n]+);?\n/g,
@@ -69,30 +122,4 @@ function deduped(named, main) {
 			return match
 		}
 	)
-}
-
-function browserizeMain(data) {
-	const mainExportParts = data.split(/^module\.exports[ \t\n]*=[ \t\n]*/m)
-
-	if (mainExportParts.length !== 2) {
-		throw new Error('Expect exactly one export in default export file')
-	}
-
-	return `${mainExportParts[0]}export default ${mainExportParts[1]}`
-}
-
-function browserizeNamed(data, defaultExport) {
-	const namedExportsParts = data.split(/^module\.exports[ \t\n]*=[ \t\n]*\{/m)
-
-	if (namedExportsParts.length !== 2) {
-		throw new Error('Expect exactly one grouped export in named exports file')
-	}
-
-	let browserizedContent = `${namedExportsParts[0]}export {${namedExportsParts[1]}`
-
-	if (defaultExport) {
-		browserizedContent = browserizedContent.replace(defaultExport, '')
-	}
-
-	return browserizedContent
 }

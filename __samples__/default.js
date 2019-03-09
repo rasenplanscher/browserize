@@ -1,4 +1,4 @@
-const constant = 'CONSTANT'
+const constant = require('./constant')
 let variable = 0
 let placeholder
 

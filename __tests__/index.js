@@ -4,8 +4,8 @@ const path = require('path')
 
 const browserize = require('..')
 
-
-const sample = filename => fs.readFileSync(path.resolve(__dirname, '..', '__samples__', filename)).toString()
+const samplePath = filename => path.resolve(__dirname, '..', '__samples__', filename)
+const sample = filename => fs.readFileSync(samplePath(filename)).toString()
 
 const checkContent = (t, data, a, b) => {
 	t.true(data.includes(a))
@@ -140,4 +140,21 @@ test('removes unassigned duplicate variables from combined calls', t => {
 		output.indexOf(declaration),
 		output.lastIndexOf(declaration)
 	)
+})
+
+test('interpolates specified imports', t => {
+	const requirePath = './constant'
+	const requireCall = `require('${requirePath}')`
+	const requireValue = require(samplePath(requirePath))
+	const requireExport = `"${requireValue}"`
+
+	const output = browserize({
+		main,
+		imports: {
+			[requirePath]: requireValue
+		}
+	})
+
+	checkContent(t, main, requireCall, requireExport)
+	checkContent(t, output, requireExport, requireCall)
 })
