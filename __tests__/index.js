@@ -86,3 +86,58 @@ test('injects double semicolon between default and named exports', t => {
 		main.match(/defaultExport[\s\S]+/)+'\n;;'
 	))
 })
+
+test('removes duplicate constants from combined calls', t => {
+	const output = browserize({
+		main,
+		named,
+	})
+
+	const constant = 'const constant'
+
+	t.is(
+		output.indexOf(constant),
+		output.lastIndexOf(constant)
+	)
+})
+
+test ('throws if constant of same name defined with different value', t => {
+	t.throws(() => browserize({
+		main,
+		named: sample('different-constant.js')
+	}))
+})
+
+test('dedeclares duplicate variable assignments from combined calls', t => {
+	const output = browserize({
+		main,
+		named,
+	})
+
+	const declaration = 'let variable'
+	const assignment = 'variable ='
+
+	t.is(
+		output.indexOf(declaration),
+		output.lastIndexOf(declaration)
+	)
+
+	t.not(
+		output.indexOf(assignment),
+		output.lastIndexOf(assignment)
+	)
+})
+
+test('removes unassigned duplicate variables from combined calls', t => {
+	const output = browserize({
+		main,
+		named,
+	})
+
+	const declaration = 'let placeholder'
+
+	t.is(
+		output.indexOf(declaration),
+		output.lastIndexOf(declaration)
+	)
+})
