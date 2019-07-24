@@ -1,5 +1,5 @@
 const test = require('ava')
-const proxyquire =  require('proxyquire')
+const proxyquire = require('proxyquire')
 
 
 const [p1, p2, p3] = ['p1', 'p2', 'p3']

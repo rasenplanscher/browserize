@@ -10,7 +10,12 @@ const defaultOutputExtension = '.mjs'
 
 module.exports = function browserizeFS(options = {}) {
 	const files = readFiles(options)
-	const data = browserize(files)
+
+	const data = browserize({
+		...options,
+		...files,
+	})
+
 	writeFile(data, options)
 }
 
@@ -21,6 +26,7 @@ module.exports = function browserizeFS(options = {}) {
 function readFiles({
 	main: mainPath = defaultFilePath,
 	named: namedPath,
+	imports: imports,
 }) {
 	const files = {}
 
@@ -38,6 +44,14 @@ function readFiles({
 		}
 
 		files.named = fs.readFileSync(namedPath).toString()
+	}
+
+	if (imports) {
+		files.imports = {}
+
+		Object.entries(imports).forEach(([importPath, filePath]) => {
+			files.imports[importPath] = require(path.resolve(filePath))
+		})
 	}
 
 	return files

@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-'use strict';
+'use strict'
 
 // drop `node` and `cli.js`, the actual parameters come after those
-const p = require('minimist')(process.argv.slice(2));
+const p = require('minimist')(process.argv.slice(2))
 
-const fs = require('./fs');
+const fs = require('./fs')
 
 let defaultPath, namedPath, outputPath
 

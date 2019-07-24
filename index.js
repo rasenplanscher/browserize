@@ -66,8 +66,8 @@ function browserizeNamed(file, defaultExport) {
 function interpolateImports(baseFile, imports) {
 	return Object.entries(imports).reduce((file, [path, data]) => (
 		file.replace(
-			/require\((['"])(\..+?)\1\)/g,
-			(_, __, requirePath) => JSON.stringify(data)
+			new RegExp(`require\\((['"])${path}\\1\\)`, 'g'),
+			() => JSON.stringify(data)
 		)
 	), baseFile)
 }

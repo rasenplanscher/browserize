@@ -93,7 +93,7 @@ test('removes duplicate constants from combined calls', t => {
 		named,
 	})
 
-	const constant = 'const constant'
+	const constant = 'const constant '
 
 	t.is(
 		output.indexOf(constant),
@@ -148,13 +148,22 @@ test('interpolates specified imports', t => {
 	const requireValue = require(samplePath(requirePath))
 	const requireExport = `"${requireValue}"`
 
+	const requirePathX = './constantX'
+	const requireCallX = `require('${requirePathX}')`
+	const requireValueX = require(samplePath(requirePathX))
+	const requireExportX = `"${requireValueX}"`
+
 	const output = browserize({
 		main,
 		imports: {
-			[requirePath]: requireValue
+			[requirePath]: requireValue,
+			[requirePathX]: requireValueX,
 		}
 	})
 
 	checkContent(t, main, requireCall, requireExport)
 	checkContent(t, output, requireExport, requireCall)
+
+	checkContent(t, main, requireCallX, requireExportX)
+	checkContent(t, output, requireExportX, requireCallX)
 })
